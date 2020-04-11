@@ -46,8 +46,13 @@ public class BookController {
 	}
 
 	@RequestMapping(value = "/books/{id}", method = RequestMethod.GET)
-	public Book getOneBook(@PathVariable(value = "id") Long id) {
-		return bookRepository.getOne(id);
+	public ResponseEntity<Book> getOneBook(@PathVariable(value = "id") Long id) {
+	    if(bookRepository.existsById(id)==false) {
+	    	return new ResponseEntity<Book>(HttpStatus.NOT_FOUND);
+	    }else {
+		    Book book =  bookRepository.getOne(id);
+	 	   return new ResponseEntity<Book>(book, HttpStatus.ACCEPTED);
+	    }
 	}
 
 	@RequestMapping(value = "/books", method = RequestMethod.POST)
@@ -82,6 +87,22 @@ public class BookController {
 		} else {
 			bookRepository.deleteById(id);
 			response = new ResponseEntity<String>("Book:" + id + " deleted", HttpStatus.ACCEPTED);
+		}
+		return response;
+	}
+	
+	//TODO:Exact difference between PARCH and PUT
+	@RequestMapping(value = "/books/{id}", method = RequestMethod.PATCH)
+	public ResponseEntity<String> patchBook(@PathVariable(value = "id") Long id, @Valid @RequestBody Book newBook) {
+		Book updateBook = bookRepository.getOne(id);
+		ResponseEntity<String> response = null;
+		if (updateBook == null) {
+			response = new ResponseEntity<String>("Book Not Found", HttpStatus.NOT_FOUND);
+		} else {
+			updateBook.setBookName(newBook.getBookName());
+			updateBook.setBookPrice(newBook.getBookPrice());
+			bookRepository.save(updateBook);
+			response = new ResponseEntity<String>("Book:" + id + " updated", HttpStatus.ACCEPTED);
 		}
 		return response;
 	}
